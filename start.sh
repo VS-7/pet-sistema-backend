@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${YELLOW}Iniciando serviços com Docker Compose...${NC}"
-docker-compose up -d
+sudo docker up -d
 
 # Aguardar serviços estarem prontos
 echo -e "${YELLOW}Aguardando serviços iniciarem...${NC}"
@@ -16,7 +16,7 @@ sleep 10
 # Verificar status dos containers
 check_container() {
     local container_name=$1
-    if [ "$(docker container inspect -f '{{.State.Health.Status}}' $container_name)" == "healthy" ]; then
+    if [ "$(sudo docker container inspect -f '{{.State.Health.Status}}' $container_name)" == "healthy" ]; then
         echo -e "${GREEN}✓ $container_name está rodando${NC}"
         return 0
     else

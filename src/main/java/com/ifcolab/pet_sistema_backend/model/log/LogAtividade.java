@@ -6,8 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.Type;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 
 @Entity
 @Table(name = "logs_atividades")
@@ -35,8 +37,9 @@ public class LogAtividade {
     @Column(nullable = false)
     private TipoAcao acao;
     
+    @Type(JsonType.class)
     @Column(columnDefinition = "jsonb")
-    private String detalhes;
+    private JsonNode detalhes;
     
     @Column(nullable = false)
     private LocalDateTime dataAcao;

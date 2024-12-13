@@ -1,5 +1,7 @@
 package com.ifcolab.pet_sistema_backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ifcolab.pet_sistema_backend.dto.documento.DocumentoRequest;
 import com.ifcolab.pet_sistema_backend.dto.documento.DocumentoResponse;
 import com.ifcolab.pet_sistema_backend.exception.DocumentoNaoEncontradoException;
@@ -11,10 +13,12 @@ import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
 import com.ifcolab.pet_sistema_backend.repository.DocumentoRepository;
 import com.ifcolab.pet_sistema_backend.repository.ProjetoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+     
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,24 +37,30 @@ public class DocumentoService {
             throw new TituloDocumentoDuplicadoException(request.getTitulo());
         }
 
-        var documento = Documento.builder()
-                .projeto(projeto)
-                .tipo(request.getTipo())
-                .titulo(request.getTitulo())
-                .conteudo(request.getConteudo())
-                .build();
+        try {
+            JsonNode conteudoJson = request.getConteudo();
 
-        var documentoSalvo = documentoRepository.save(documento);
+            var documento = Documento.builder()
+                    .projeto(projeto)
+                    .tipo(request.getTipo())
+                    .titulo(request.getTitulo())
+                    .conteudo(conteudoJson)
+                    .build();
 
-        logAtividadeService.registrar(
-                usuarioLogado,
-                "Documento",
-                documentoSalvo.getId(),
-                TipoAcao.CRIAR,
-                null
-        );
+            var documentoSalvo = documentoRepository.save(documento);
 
-        return converterParaResponse(documentoSalvo);
+            logAtividadeService.registrar(
+                    usuarioLogado,
+                    "Documento",
+                    documentoSalvo.getId(),
+                    TipoAcao.CRIAR,
+                    null
+            );
+
+            return converterParaResponse(documentoSalvo);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao criar documento", e);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -103,6 +113,14 @@ public class DocumentoService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public List<DocumentoResponse> listarTodos() {
+        List<Documento> documentos = documentoRepository.findAll();
+        return documentos.stream()
+                .map(this::converterParaResponse)
+                .collect(Collectors.toList());
+    }
+
     private DocumentoResponse converterParaResponse(Documento documento) {
         return DocumentoResponse.builder()
                 .id(documento.getId())
@@ -114,4 +132,5 @@ public class DocumentoService {
                 .dataAtualizacao(documento.getDataAtualizacao())
                 .build();
     }
+    
 } 

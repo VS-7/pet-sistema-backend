@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,7 +17,7 @@ public class DocumentoResponse {
     private Long projetoId;
     private TipoDocumento tipo;
     private String titulo;
-    private String conteudo;
+    private JsonNode conteudo;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 } 

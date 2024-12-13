@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import org.hibernate.annotations.Type;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 
 import java.time.LocalDateTime;
 
@@ -32,9 +34,10 @@ public class Documento {
     
     @Column(nullable = false)
     private String titulo;
-    
+
+    @Type(JsonType.class)
     @Column(columnDefinition = "jsonb")
-    private String conteudo;
+    private JsonNode conteudo;
     
     @Column(nullable = false)
     private LocalDateTime dataCriacao;

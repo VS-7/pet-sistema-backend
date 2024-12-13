@@ -18,6 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,17 +48,24 @@ public class ProjetoService {
                 .participantes(Set.copyOf(participantes))
                 .build();
 
-        var projetoSalvo = projetoRepository.save(projeto);
+        var projetoCriado = projetoRepository.save(projeto);
+
+        Map<String, Object> detalhesLog = Map.of(
+            "titulo", projeto.getTitulo(),
+            "descricao", projeto.getDescricao(),
+            "tutorId", projeto.getTutor().getId(),
+            "status", projeto.getStatus()
+        );
 
         logAtividadeService.registrar(
                 usuarioLogado,
                 "Projeto",
-                projetoSalvo.getId(),
+                projetoCriado.getId(),
                 TipoAcao.CRIAR,
-                null
+                detalhesLog
         );
 
-        return converterParaResponse(projetoSalvo);
+        return converterParaResponse(projetoCriado);
     }
 
     private ProjetoResponse converterParaResponse(Projeto projeto) {
@@ -104,14 +113,19 @@ public class ProjetoService {
         var tutor = usuarioRepository.findById(request.getTutorId())
                 .orElseThrow(() -> new UsuarioNaoEncontradoException("Tutor não encontrado"));
 
-        var participantes = request.getParticipantesIds() != null ?
-                usuarioRepository.findAllById(request.getParticipantesIds()) :
-                Set.<Usuario>of();
+        Set<Usuario> participantes = new HashSet<>();
+        if (request.getParticipantesIds() != null) {
+            for (Long participanteId : request.getParticipantesIds()) {
+                Usuario usuario = usuarioRepository.findById(participanteId)
+                        .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com ID: " + participanteId));
+                participantes.add(usuario);
+            }
+        }
 
         projeto.setTitulo(request.getTitulo());
         projeto.setDescricao(request.getDescricao());
         projeto.setTutor(tutor);
-        projeto.setParticipantes(Set.copyOf(participantes));
+        projeto.setParticipantes(participantes);
 
         var projetoAtualizado = projetoRepository.save(projeto);
 

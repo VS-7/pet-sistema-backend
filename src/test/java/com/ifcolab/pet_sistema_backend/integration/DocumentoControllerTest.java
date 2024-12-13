@@ -1,11 +1,16 @@
 package com.ifcolab.pet_sistema_backend.integration;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ifcolab.pet_sistema_backend.dto.documento.DocumentoRequest;
 import com.ifcolab.pet_sistema_backend.dto.projeto.ProjetoRequest;
 import com.ifcolab.pet_sistema_backend.model.documento.TipoDocumento;
 import com.ifcolab.pet_sistema_backend.model.usuario.TipoUsuario;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -13,7 +18,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class DocumentoControllerTest extends IntegrationTestBase {
+@SpringBootTest
+@AutoConfigureMockMvc
+public class DocumentoControllerTest extends IntegrationTestBase {
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private TestUsuario usuarioTutor;
     private TestUsuario usuarioPetiano;
@@ -34,11 +44,14 @@ class DocumentoControllerTest extends IntegrationTestBase {
 
     @Test
     void criar_DeveRetornarSucesso_QuandoDadosValidos() throws Exception {
+        // Criar um objeto JsonNode para o conteúdo
+        JsonNode conteudoJson = objectMapper.readTree("{\"key\": \"value\"}");
+
         var request = DocumentoRequest.builder()
                 .projetoId(projetoId)
                 .tipo(TipoDocumento.ENSINO)
                 .titulo("Documento de Teste")
-                .conteudo("Conteúdo do documento de teste")
+                .conteudo(conteudoJson)
                 .build();
 
         mockMvc.perform(post("/api/v1/documentos")
@@ -72,7 +85,7 @@ class DocumentoControllerTest extends IntegrationTestBase {
                 .projetoId(projetoId)
                 .tipo(TipoDocumento.PESQUISA)
                 .titulo("Documento Atualizado")
-                .conteudo("Novo conteúdo")
+                .conteudo(objectMapper.readTree("{\"key\": \"value\"}"))
                 .build();
 
         mockMvc.perform(put("/api/v1/documentos/{id}", documentoId)
@@ -122,7 +135,7 @@ class DocumentoControllerTest extends IntegrationTestBase {
                 .projetoId(projetoId)
                 .tipo(TipoDocumento.ENSINO)
                 .titulo("Documento Teste")
-                .conteudo("Conteúdo do documento teste")
+                .conteudo(objectMapper.readTree("{\"key\": \"value\"}"))
                 .build();
 
         var resultado = mockMvc.perform(post("/api/v1/documentos")

@@ -7,7 +7,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import org.hibernate.annotations.Type;
+import com.vladmihalcea.hibernate.type.json.JsonType;
+import com.fasterxml.jackson.databind.JsonNode;
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,5 +25,6 @@ public class DocumentoRequest {
     @NotBlank(message = "O título é obrigatório")
     private String titulo;
     
-    private String conteudo;
+    @Type(JsonType.class)
+    private JsonNode conteudo;
 } 
