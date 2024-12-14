@@ -4,11 +4,15 @@ import com.ifcolab.pet_sistema_backend.dto.auth.AuthenticationResponse;
 import com.ifcolab.pet_sistema_backend.dto.auth.LoginRequest;
 import com.ifcolab.pet_sistema_backend.dto.auth.RegisterRequest;
 import com.ifcolab.pet_sistema_backend.service.AuthenticationService;
+import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,4 +37,11 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> login(@RequestBody @Valid LoginRequest request) {
         return ResponseEntity.ok(authenticationService.autenticar(request));
     }
+
+    @GetMapping("/me")
+    @Operation(summary = "Obter usuário autenticado", description = "Retorna os dados do usuário autenticado")
+    public ResponseEntity<UsuarioResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(authenticationService.getUsuarioAutenticado(userDetails.getUsername()));
+    }
+    
 } 

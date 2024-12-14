@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.ifcolab.pet_sistema_backend.model.usuario.TipoUsuario;
+import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
 
 @Data
 @Builder
@@ -20,4 +22,8 @@ public class AuthenticationResponse {
     
     @JsonProperty("expires_in")
     private long expiresIn;
+
+    private TipoUsuario tipo;
+
+    private UsuarioResponse usuario;
 } 

@@ -3,6 +3,7 @@ package com.ifcolab.pet_sistema_backend.service;
 import com.ifcolab.pet_sistema_backend.dto.auth.AuthenticationResponse;
 import com.ifcolab.pet_sistema_backend.dto.auth.LoginRequest;
 import com.ifcolab.pet_sistema_backend.dto.auth.RegisterRequest;
+import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
 import com.ifcolab.pet_sistema_backend.exception.EmailJaCadastradoException;
 import com.ifcolab.pet_sistema_backend.exception.UsuarioNaoEncontradoException;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
@@ -45,14 +46,9 @@ public class AuthenticationService {
                 .dataAtualizacao(LocalDateTime.now())
                 .build();
 
-        usuarioRepository.save(usuario);
-        String token = jwtService.generateToken(usuario);
+        var usuarioSalvo = usuarioRepository.save(usuario);
         
-        return AuthenticationResponse.builder()
-                .accessToken(token)
-                .tokenType("Bearer")
-                .expiresIn(jwtExpiration / 1000) // Convertendo para segundos
-                .build();
+        return gerarTokenResponse(usuarioSalvo);
     }
 
     public AuthenticationResponse autenticar(LoginRequest request) {
@@ -66,12 +62,29 @@ public class AuthenticationService {
         var usuario = usuarioRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsuarioNaoEncontradoException(request.getEmail()));
 
+        return gerarTokenResponse(usuario);
+    }
+    
+    public UsuarioResponse getUsuarioAutenticado(String email) {
+        var usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsuarioNaoEncontradoException(email));
+
+        return UsuarioResponse.builder()
+                .id(usuario.getId())
+                .nome(usuario.getNome())
+                .email(usuario.getEmail())
+                .tipo(usuario.getTipo())
+                .build();
+    }
+
+    private AuthenticationResponse gerarTokenResponse(Usuario usuario) {
         String token = jwtService.generateToken(usuario);
         
         return AuthenticationResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
                 .expiresIn(jwtExpiration / 1000)
+                .tipo(usuario.getTipo())
                 .build();
     }
 } 

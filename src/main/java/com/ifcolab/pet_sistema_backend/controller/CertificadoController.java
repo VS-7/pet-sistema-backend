@@ -20,8 +20,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/certificados")
 @RequiredArgsConstructor
@@ -78,12 +76,5 @@ public class CertificadoController {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"certificado-" + id + ".pdf\"")
                 .body(pdf);
-    }
-
-    @GetMapping
-    @Operation(summary = "Listar certificados", description = "Lista todos os certificados")
-    public ResponseEntity<List<CertificadoResponse>> listarTodos() {
-        List<CertificadoResponse> certificados = certificadoService.listarTodos();
-        return ResponseEntity.ok(certificados);
     }
 } 
