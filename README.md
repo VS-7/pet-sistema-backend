@@ -87,7 +87,7 @@ src/
 
 1. **Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/pet-sistema-backend.git
+git clone https://github.com/VS-7/pet-sistema-backend.git
 cd pet-sistema-backend
 ```
 
