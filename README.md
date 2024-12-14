@@ -136,12 +136,15 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 **Criar Projeto**
 
 ```bash
+bash
 curl -X POST http://localhost:8080/api/v1/projetos \
--H "Authorization: Bearer {token}" \
+-H "Authorization: Bearer $TOKEN" \
 -H "Content-Type: application/json" \
 -d '{
-  "nome": "Novo Projeto",
-  "descricao": "Descrição do projeto"
+  "titulo": "Projeto de Pesquisa",
+  "descricao": "Descrição detalhada",
+  "tutorId": 1,
+  "participantesIds": [2, 3]
 }'
 ```
 
@@ -165,6 +168,7 @@ curl -X POST http://localhost:8080/api/v1/documentos \
   }
 }'
 ```
+...
 ## 📚 Documentação da API
 
 ### Endpoints Principais
