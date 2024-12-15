@@ -9,7 +9,6 @@ Sistema de gerenciamento do Plano de Estudo Tutorial (PET), uma plataforma robus
 - [Instalação](#-instalação)
 - [Uso da API](#-uso-da-api)
 - [Documentação da API](#-documentação-da-api)
-- [Contribuição](#-contribuição)
 
 ## 🎯 Sobre o Projeto
 
