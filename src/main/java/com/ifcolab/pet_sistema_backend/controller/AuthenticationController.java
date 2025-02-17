@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -26,12 +27,25 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    @PostMapping("/registrar-tutor")
+    @Operation(summary = "Registrar tutor", description = "Registra o tutor (administrador) do sistema")
+    public ResponseEntity<AuthenticationResponse> registrarTutor(@RequestBody @Valid RegisterRequest request) {
+        return ResponseEntity.ok(authenticationService.registrarTutor(request));
+    }
+
+    @PostMapping("/registrar-petiano")
+    @PreAuthorize("hasRole('TUTOR')")
+    @Operation(summary = "Registrar petiano", description = "Registra um novo petiano no sistema (apenas tutores)")
+    public ResponseEntity<AuthenticationResponse> registrarPetiano(@RequestBody @Valid RegisterRequest request) {
+        return ResponseEntity.ok(authenticationService.registrarPetiano(request));
+    }
+/* 
     @PostMapping("/registrar")
     @Operation(summary = "Registrar novo usuário", description = "Registra um novo usuário no sistema")
     public ResponseEntity<AuthenticationResponse> registrar(@RequestBody @Valid RegisterRequest request) {
         return ResponseEntity.ok(authenticationService.registrar(request));
     }
-
+*/
     @PostMapping("/login")
     @Operation(summary = "Realizar login", description = "Autentica um usuário existente")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody @Valid LoginRequest request) {

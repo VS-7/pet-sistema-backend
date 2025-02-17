@@ -7,6 +7,7 @@ import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
 import com.ifcolab.pet_sistema_backend.exception.EmailJaCadastradoException;
 import com.ifcolab.pet_sistema_backend.exception.UsuarioNaoEncontradoException;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
+import com.ifcolab.pet_sistema_backend.model.usuario.TipoUsuario;
 import com.ifcolab.pet_sistema_backend.repository.UsuarioRepository;
 import com.ifcolab.pet_sistema_backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import java.security.SecureRandom;
 
 import java.time.LocalDateTime;
 
@@ -27,12 +31,13 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final JavaMailSender emailSender;
 
     @Value("${spring.security.jwt.expiration}")
     private long jwtExpiration;
 
     @Transactional
-    public AuthenticationResponse registrar(RegisterRequest request) {
+    public AuthenticationResponse registrarTutor(RegisterRequest request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new EmailJaCadastradoException(request.getEmail());
         }
@@ -41,14 +46,62 @@ public class AuthenticationService {
                 .nome(request.getNome())
                 .email(request.getEmail())
                 .senha(passwordEncoder.encode(request.getSenha()))
-                .tipo(request.getTipo())
+                .tipo(TipoUsuario.TUTOR)
+                .dataCriacao(LocalDateTime.now())
+                .dataAtualizacao(LocalDateTime.now())
+                .build();
+
+        var usuarioSalvo = usuarioRepository.save(usuario);
+        return gerarTokenResponse(usuarioSalvo);
+    }
+
+    @Transactional
+    public AuthenticationResponse registrarPetiano(RegisterRequest request) {
+        if (usuarioRepository.existsByEmail(request.getEmail())) {
+            throw new EmailJaCadastradoException(request.getEmail());
+        }
+
+        String senhaGerada = gerarSenhaAleatoria();
+        
+        var usuario = Usuario.builder()
+                .nome(request.getNome())
+                .email(request.getEmail())
+                .senha(passwordEncoder.encode(senhaGerada))
+                .tipo(TipoUsuario.PETIANO)
                 .dataCriacao(LocalDateTime.now())
                 .dataAtualizacao(LocalDateTime.now())
                 .build();
 
         var usuarioSalvo = usuarioRepository.save(usuario);
         
+        enviarEmailComSenha(request.getEmail(), senhaGerada);
+        
         return gerarTokenResponse(usuarioSalvo);
+    }
+
+    private String gerarSenhaAleatoria() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        SecureRandom random = new SecureRandom();
+        StringBuilder senha = new StringBuilder();
+        
+        for (int i = 0; i < 12; i++) {
+            senha.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        
+        return senha.toString();
+    }
+
+    private void enviarEmailComSenha(String emailDestino, String senha) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(emailDestino);
+        message.setSubject("Suas credenciais de acesso ao Sistema PET");
+        message.setText("Olá!\n\nSua conta foi criada no Sistema PET. Use as seguintes credenciais para acessar:\n\n" +
+                "Email: " + emailDestino + "\n" +
+                "Senha: " + senha + "\n\n" +
+                "Recomendamos que você altere sua senha após o primeiro acesso.\n\n" +
+                "Atenciosamente,\nEquipe PET");
+        
+        emailSender.send(message);
     }
 
     public AuthenticationResponse autenticar(LoginRequest request) {
