@@ -1,0 +1,171 @@
+API PET Sistema Backend - Guia de Endpoints
+
+Base URL: http://localhost:8080/api/v1
+
+=== AUTENTICAÇÃO ===
+
+POST /auth/registrar-tutor
+{
+  "nome": "string",
+  "email": "string", 
+  "senha": "string",
+  "tipo": "TUTOR"
+}
+
+POST /auth/registrar-petiano 
+{
+  "nome": "string",
+  "email": "string",
+  "senha": "string", 
+  "tipo": "PETIANO"
+}
+
+POST /auth/login
+{
+  "email": "string",
+  "senha": "string"
+}
+
+GET /auth/me
+
+=== GRUPOS PET ===
+
+POST /pets
+{
+  "nome": "string",
+  "descricao": "string",
+  "membrosIds": [1, 2, 3]
+}
+
+GET /pets
+
+GET /pets/{id}
+
+PUT /pets/{id}
+{
+  "nome": "string",
+  "descricao": "string",
+  "membrosIds": [1, 2, 3]
+}
+
+DELETE /pets/{id}
+
+=== PROJETOS ===
+
+POST /projetos
+{
+  "titulo": "string",
+  "descricao": "string",
+  "petId": 0,
+  "participantesIds": [1, 2, 3]
+}
+
+GET /projetos?page=0&size=10&sort=dataCriacao,desc
+
+GET /projetos/{id}
+
+PUT /projetos/{id}
+{
+  "titulo": "string",
+  "descricao": "string",
+  "petId": 0,
+  "participantesIds": [1, 2, 3]
+}
+
+DELETE /projetos/{id}
+
+=== DOCUMENTOS ===
+
+POST /documentos
+{
+  "projetoId": 0,
+  "tipo": "ATA",
+  "titulo": "string",
+  "conteudo": {}
+}
+
+GET /documentos/{id}
+
+PUT /documentos/{id}
+{
+  "projetoId": 0,
+  "tipo": "ATA", 
+  "titulo": "string",
+  "conteudo": {}
+}
+
+DELETE /documentos/{id}
+
+=== CERTIFICADOS ===
+
+POST /certificados
+{
+  "projetoId": 0,
+  "usuarioId": 0,
+  "dataInicioProjeto": "2024-02-18T00:00:00",
+  "dataFimProjeto": "2024-02-18T00:00:00",
+  "descricaoAtividades": "string",
+  "cargaHoraria": 0
+}
+
+GET /certificados/{id}
+
+GET /certificados/validar/{codigo}
+
+GET /certificados/usuario/{usuarioId}?page=0&size=10
+
+GET /certificados/{id}/pdf
+
+=== NOTIFICAÇÕES ===
+
+POST /notificacoes
+{
+  "usuariosIds": [1, 2, 3],
+  "titulo": "string",
+  "mensagem": "string",
+  "tipo": "SISTEMA",
+  "enviarEmail": true
+}
+
+GET /notificacoes/usuario/{usuarioId}?apenasNaoLidas=false&page=0&size=10
+
+PATCH /notificacoes/{id}/lida
+
+GET /notificacoes/usuario/{usuarioId}/nao-lidas/contagem
+
+=== ESTATÍSTICAS ===
+
+GET /estatisticas
+
+GET /estatisticas/tutor/{tutorId}
+
+=== ENUMS ===
+
+TipoUsuario:
+- ADMIN
+- TUTOR  
+- PETIANO
+
+StatusProjeto:
+- EM_ANDAMENTO
+- CONCLUIDO
+- CANCELADO
+- SUSPENSO
+
+TipoDocumento:
+- ATA
+- RELATORIO
+- PLANEJAMENTO  
+- OUTROS
+
+TipoNotificacao:
+- SISTEMA
+- PROJETO
+- DOCUMENTO
+- CERTIFICADO
+
+Observações:
+- Todas as requisições (exceto login e registro) requerem o header:
+  Authorization: Bearer {token_jwt}
+- Alguns endpoints requerem permissões específicas (ADMIN ou TUTOR)
+- Paginação disponível em endpoints que retornam listas 

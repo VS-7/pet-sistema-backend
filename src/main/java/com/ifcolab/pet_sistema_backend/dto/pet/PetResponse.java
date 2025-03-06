@@ -1,8 +1,6 @@
-package com.ifcolab.pet_sistema_backend.dto.projeto;
+package com.ifcolab.pet_sistema_backend.dto.pet;
 
-import com.ifcolab.pet_sistema_backend.dto.pet.PetResponse;
 import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
-import com.ifcolab.pet_sistema_backend.model.projeto.StatusProjeto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,14 +13,13 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProjetoResponse {
+public class PetResponse {
     private Long id;
-    private String titulo;
+    private String nome;
+    private String codigo;
     private String descricao;
-    private StatusProjeto status;
-    private PetResponse pet;
     private UsuarioResponse tutor;
-    private Set<UsuarioResponse> participantes;
+    private Set<UsuarioResponse> membros;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 } 

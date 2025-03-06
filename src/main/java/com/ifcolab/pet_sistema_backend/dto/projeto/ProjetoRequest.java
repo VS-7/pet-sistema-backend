@@ -21,8 +21,8 @@ public class ProjetoRequest {
     @NotBlank(message = "A descrição é obrigatória")
     private String descricao;
     
-    @NotNull(message = "O ID do tutor é obrigatório")
-    private Long tutorId;
+    @NotNull(message = "O ID do PET é obrigatório")
+    private Long petId;
     
     private Set<Long> participantesIds;
 } 

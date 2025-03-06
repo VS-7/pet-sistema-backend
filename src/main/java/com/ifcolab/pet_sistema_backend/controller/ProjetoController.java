@@ -40,15 +40,21 @@ public class ProjetoController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar projetos", description = "Lista todos os projetos com paginação")
-    public ResponseEntity<Page<ProjetoResponse>> listar(Pageable pageable) {
-        return ResponseEntity.ok(projetoService.listar(pageable));
+    @Operation(summary = "Listar projetos", description = "Lista todos os projetos que o usuário tem acesso")
+    public ResponseEntity<Page<ProjetoResponse>> listar(
+            Pageable pageable,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(projetoService.listar(pageable, usuarioLogado));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar projeto", description = "Busca um projeto pelo ID")
-    public ResponseEntity<ProjetoResponse> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(projetoService.buscarPorId(id));
+    public ResponseEntity<ProjetoResponse> buscarPorId(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(projetoService.buscarPorId(id, usuarioLogado));
     }
 
     @PutMapping("/{id}")

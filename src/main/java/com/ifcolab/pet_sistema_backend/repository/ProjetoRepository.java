@@ -23,4 +23,10 @@ public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
     Page<Projeto> buscarPorTermo(String termo, Pageable pageable);
     
     List<Projeto> findByTutorAndStatus(Usuario tutor, StatusProjeto status);
+    
+    @Query("SELECT p FROM Projeto p WHERE p.pet.tutor = :usuario OR :usuario MEMBER OF p.pet.membros")
+    Page<Projeto> findByPetTutorOrPetMembros(Usuario usuario, Pageable pageable);
+    
+    @Query("SELECT COUNT(p) FROM Projeto p WHERE p.pet.tutor = :usuario")
+    long countByPetTutor(Usuario usuario);
 } 

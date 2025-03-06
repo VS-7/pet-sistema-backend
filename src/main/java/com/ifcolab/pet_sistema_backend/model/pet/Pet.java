@@ -1,8 +1,6 @@
-package com.ifcolab.pet_sistema_backend.model.projeto;
+package com.ifcolab.pet_sistema_backend.model.pet;
 
-import com.ifcolab.pet_sistema_backend.model.documento.Documento;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
-import com.ifcolab.pet_sistema_backend.model.pet.Pet;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,61 +11,48 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Entity
-@Table(name = "projetos")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Projeto {
-    
+@Entity
+@Table(name = "pets")
+public class Pet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
-    private String titulo;
-    
-    @Column(nullable = false, columnDefinition = "TEXT")
+    private String nome;
+
+    @Column(nullable = false, unique = true)
+    private String codigo;
+
     private String descricao;
-    
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private StatusProjeto status;
-    
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tutor_id", nullable = false)
     private Usuario tutor;
-    
+
     @ManyToMany
     @JoinTable(
-        name = "projeto_participantes",
-        joinColumns = @JoinColumn(name = "projeto_id"),
+        name = "pet_membros",
+        joinColumns = @JoinColumn(name = "pet_id"),
         inverseJoinColumns = @JoinColumn(name = "usuario_id")
     )
     @Builder.Default
-    private Set<Usuario> participantes = new HashSet<>();
-    
-    @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private Set<Documento> documentos = new HashSet<>();
-    
+    private Set<Usuario> membros = new HashSet<>();
+
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
-    
-    @Column(nullable = false)
+
     private LocalDateTime dataAtualizacao;
-    
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pet_id", nullable = false)
-    private Pet pet;
-    
+
     @PrePersist
     protected void onCreate() {
         dataCriacao = LocalDateTime.now();
-        dataAtualizacao = LocalDateTime.now();
     }
-    
+
     @PreUpdate
     protected void onUpdate() {
         dataAtualizacao = LocalDateTime.now();

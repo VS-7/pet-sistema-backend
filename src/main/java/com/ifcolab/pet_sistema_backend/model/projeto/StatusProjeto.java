@@ -1,8 +1,8 @@
 package com.ifcolab.pet_sistema_backend.model.projeto;
 
 public enum StatusProjeto {
-    EM_DESENVOLVIMENTO,
+    EM_ANDAMENTO,
     CONCLUIDO,
     CANCELADO,
-    EM_REVISAO
+    SUSPENSO
 } 

@@ -3,15 +3,16 @@ package com.ifcolab.pet_sistema_backend.service;
 import com.ifcolab.pet_sistema_backend.dto.projeto.ProjetoRequest;
 import com.ifcolab.pet_sistema_backend.dto.projeto.ProjetoResponse;
 import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
-import com.ifcolab.pet_sistema_backend.exception.ProjetoNaoEncontradoException;
-import com.ifcolab.pet_sistema_backend.exception.UsuarioNaoEncontradoException;
-import com.ifcolab.pet_sistema_backend.model.log.LogAtividade;
+import com.ifcolab.pet_sistema_backend.dto.pet.PetResponse;
+import com.ifcolab.pet_sistema_backend.exception.ResourceNotFoundException;
+import com.ifcolab.pet_sistema_backend.exception.UnauthorizedException;
+
 import com.ifcolab.pet_sistema_backend.model.log.TipoAcao;
+import com.ifcolab.pet_sistema_backend.model.pet.Pet;
 import com.ifcolab.pet_sistema_backend.model.projeto.Projeto;
 import com.ifcolab.pet_sistema_backend.model.projeto.StatusProjeto;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
 import com.ifcolab.pet_sistema_backend.repository.ProjetoRepository;
-import com.ifcolab.pet_sistema_backend.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,25 +27,32 @@ import java.util.stream.Collectors;
 public class ProjetoService {
 
     private final ProjetoRepository projetoRepository;
-    private final UsuarioRepository usuarioRepository;
     private final LogAtividadeService logAtividadeService;
+    private final PetService petService;
 
     @Transactional
     public ProjetoResponse criar(ProjetoRequest request, Usuario usuarioLogado) {
-        var tutor = usuarioRepository.findById(request.getTutorId())
-                .orElseThrow(() -> new UsuarioNaoEncontradoException("Tutor não encontrado"));
-
-        var participantes = request.getParticipantesIds() != null ?
-                usuarioRepository.findAllById(request.getParticipantesIds()) :
-                Set.<Usuario>of();
+        var pet = petService.buscarEntidade(request.getPetId());
+        
+        // Verifica se o usuário tem acesso ao PET
+        if (!pet.getTutor().equals(usuarioLogado) && !pet.getMembros().contains(usuarioLogado)) {
+            throw new UnauthorizedException("Usuário não tem acesso a este PET");
+        }
 
         var projeto = Projeto.builder()
                 .titulo(request.getTitulo())
                 .descricao(request.getDescricao())
-                .status(StatusProjeto.EM_DESENVOLVIMENTO)
-                .tutor(tutor)
-                .participantes(Set.copyOf(participantes))
+                .status(StatusProjeto.EM_ANDAMENTO)
+                .tutor(pet.getTutor()) // O tutor do projeto será sempre o tutor do PET
+                .pet(pet)
                 .build();
+
+        if (request.getParticipantesIds() != null && !request.getParticipantesIds().isEmpty()) {
+            var participantes = pet.getMembros().stream()
+                    .filter(membro -> request.getParticipantesIds().contains(membro.getId()))
+                    .collect(Collectors.toSet());
+            projeto.setParticipantes(participantes);
+        }
 
         var projetoCriado = projetoRepository.save(projeto);
 
@@ -68,64 +74,40 @@ public class ProjetoService {
         return converterParaResponse(projetoCriado);
     }
 
-    private ProjetoResponse converterParaResponse(Projeto projeto) {
-        return ProjetoResponse.builder()
-                .id(projeto.getId())
-                .titulo(projeto.getTitulo())
-                .descricao(projeto.getDescricao())
-                .status(projeto.getStatus())
-                .tutor(converterUsuarioParaResponse(projeto.getTutor()))
-                .participantes(projeto.getParticipantes().stream()
-                        .map(this::converterUsuarioParaResponse)
-                        .collect(Collectors.toSet()))
-                .dataCriacao(projeto.getDataCriacao())
-                .dataAtualizacao(projeto.getDataAtualizacao())
-                .build();
-    }
-
-    private UsuarioResponse converterUsuarioParaResponse(Usuario usuario) {
-        return UsuarioResponse.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .tipo(usuario.getTipo())
-                .build();
-    }
-
     @Transactional(readOnly = true)
-    public Page<ProjetoResponse> listar(Pageable pageable) {
-        return projetoRepository.findAll(pageable)
+    public Page<ProjetoResponse> listar(Pageable pageable, Usuario usuarioLogado) {
+        return projetoRepository.findByPetTutorOrPetMembros(usuarioLogado, pageable)
                 .map(this::converterParaResponse);
     }
 
     @Transactional(readOnly = true)
-    public ProjetoResponse buscarPorId(Long id) {
-        return projetoRepository.findById(id)
-                .map(this::converterParaResponse)
-                .orElseThrow(() -> new ProjetoNaoEncontradoException(id));
+    public ProjetoResponse buscarPorId(Long id, Usuario usuarioLogado) {
+        var projeto = buscarEntidade(id);
+        validarAcesso(projeto, usuarioLogado);
+        return converterParaResponse(projeto);
     }
 
     @Transactional
     public ProjetoResponse atualizar(Long id, ProjetoRequest request, Usuario usuarioLogado) {
-        var projeto = projetoRepository.findById(id)
-                .orElseThrow(() -> new ProjetoNaoEncontradoException(id));
+        var projeto = buscarEntidade(id);
+        validarAcesso(projeto, usuarioLogado);
 
-        var tutor = usuarioRepository.findById(request.getTutorId())
-                .orElseThrow(() -> new UsuarioNaoEncontradoException("Tutor não encontrado"));
-
-        Set<Usuario> participantes = new HashSet<>();
-        if (request.getParticipantesIds() != null) {
-            for (Long participanteId : request.getParticipantesIds()) {
-                Usuario usuario = usuarioRepository.findById(participanteId)
-                        .orElseThrow(() -> new UsuarioNaoEncontradoException("Usuário não encontrado com ID: " + participanteId));
-                participantes.add(usuario);
-            }
+        // Verifica se o novo PET é diferente do atual
+        if (!projeto.getPet().getId().equals(request.getPetId())) {
+            var novoPet = petService.buscarEntidade(request.getPetId());
+            validarAcesso(novoPet, usuarioLogado);
+            projeto.setPet(novoPet);
         }
 
         projeto.setTitulo(request.getTitulo());
         projeto.setDescricao(request.getDescricao());
-        projeto.setTutor(tutor);
-        projeto.setParticipantes(participantes);
+
+        if (request.getParticipantesIds() != null) {
+            var participantes = projeto.getPet().getMembros().stream()
+                    .filter(membro -> request.getParticipantesIds().contains(membro.getId()))
+                    .collect(Collectors.toSet());
+            projeto.setParticipantes(participantes);
+        }
 
         var projetoAtualizado = projetoRepository.save(projeto);
 
@@ -142,9 +124,8 @@ public class ProjetoService {
 
     @Transactional
     public void excluir(Long id, Usuario usuarioLogado) {
-        var projeto = projetoRepository.findById(id)
-                .orElseThrow(() -> new ProjetoNaoEncontradoException(id));
-
+        var projeto = buscarEntidade(id);
+        validarAcesso(projeto, usuarioLogado);
         projetoRepository.delete(projeto);
 
         logAtividadeService.registrar(
@@ -154,5 +135,69 @@ public class ProjetoService {
                 TipoAcao.EXCLUIR,
                 null
         );
+    }
+
+    public Projeto buscarEntidade(Long id) {
+        return projetoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Projeto não encontrado"));
+    }
+
+    private void validarAcesso(Projeto projeto, Usuario usuario) {
+        Pet pet = projeto.getPet();
+        boolean isTutor = pet.getTutor().equals(usuario);
+        boolean isMembro = pet.getMembros().contains(usuario);
+        
+        if (!isTutor && !isMembro) {
+            throw new UnauthorizedException("Usuário não tem acesso a este projeto");
+        }
+    }
+
+    private void validarAcesso(Pet pet, Usuario usuario) {
+        boolean isTutor = pet.getTutor().equals(usuario);
+        boolean isMembro = pet.getMembros().contains(usuario);
+        
+        if (!isTutor && !isMembro) {
+            throw new UnauthorizedException("Usuário não tem acesso a este PET");
+        }
+    }
+
+    private ProjetoResponse converterParaResponse(Projeto projeto) {
+        return ProjetoResponse.builder()
+                .id(projeto.getId())
+                .titulo(projeto.getTitulo())
+                .descricao(projeto.getDescricao())
+                .status(projeto.getStatus())
+                .pet(converterPetParaResponse(projeto.getPet()))
+                .tutor(converterUsuarioParaResponse(projeto.getTutor()))
+                .participantes(projeto.getParticipantes().stream()
+                        .map(this::converterUsuarioParaResponse)
+                        .collect(Collectors.toSet()))
+                .dataCriacao(projeto.getDataCriacao())
+                .dataAtualizacao(projeto.getDataAtualizacao())
+                .build();
+    }
+
+    private PetResponse converterPetParaResponse(Pet pet) {
+        return PetResponse.builder()
+                .id(pet.getId())
+                .nome(pet.getNome())
+                .codigo(pet.getCodigo())
+                .descricao(pet.getDescricao())
+                .tutor(converterUsuarioParaResponse(pet.getTutor()))
+                .membros(pet.getMembros().stream()
+                        .map(this::converterUsuarioParaResponse)
+                        .collect(Collectors.toSet()))
+                .dataCriacao(pet.getDataCriacao())
+                .dataAtualizacao(pet.getDataAtualizacao())
+                .build();
+    }
+
+    private UsuarioResponse converterUsuarioParaResponse(Usuario usuario) {
+        return UsuarioResponse.builder()
+                .id(usuario.getId())
+                .nome(usuario.getNome())
+                .email(usuario.getEmail())
+                .tipo(usuario.getTipo())
+                .build();
     }
 } 
