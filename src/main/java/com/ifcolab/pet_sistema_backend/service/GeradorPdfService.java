@@ -13,7 +13,6 @@ import com.itextpdf.layout.element.Paragraph;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;

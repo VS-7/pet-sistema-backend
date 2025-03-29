@@ -17,4 +17,6 @@ public interface PetRepository extends JpaRepository<Pet, Long> {
     boolean existsByNome(String nome);
     
     boolean existsByCodigo(String codigo);
+
+    boolean existsByTutorId(Long tutorId);
 } 

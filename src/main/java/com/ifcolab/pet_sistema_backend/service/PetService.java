@@ -5,6 +5,7 @@ import com.ifcolab.pet_sistema_backend.dto.pet.PetResponse;
 import com.ifcolab.pet_sistema_backend.dto.usuario.UsuarioResponse;
 import com.ifcolab.pet_sistema_backend.exception.ResourceNotFoundException;
 import com.ifcolab.pet_sistema_backend.exception.UnauthorizedException;
+import com.ifcolab.pet_sistema_backend.exception.PetException;
 import com.ifcolab.pet_sistema_backend.model.pet.Pet;
 import com.ifcolab.pet_sistema_backend.model.usuario.TipoUsuario;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
@@ -33,6 +34,11 @@ public class PetService {
 
         if (petRepository.existsByNome(request.getNome())) {
             throw new IllegalArgumentException("Já existe um PET com este nome");
+        }
+
+        // Verifica se o tutor já possui um PET
+        if (petRepository.existsByTutorId(usuarioLogado.getId())) {
+            throw new PetException("O tutor já possui um grupo PET cadastrado");
         }
 
         var pet = Pet.builder()
