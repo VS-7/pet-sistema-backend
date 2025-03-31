@@ -43,6 +43,12 @@ public class Usuario implements UserDetails {
     
     @Column(nullable = false)
     private LocalDateTime dataAtualizacao;
+    
+    @Column(columnDefinition = "TEXT")
+    private String imagemPerfil;
+    
+    @Column(columnDefinition = "TEXT")
+    private String bio;
 
     @PrePersist
     protected void onCreate() {

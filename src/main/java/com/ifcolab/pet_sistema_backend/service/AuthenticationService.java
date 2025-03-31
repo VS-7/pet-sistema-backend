@@ -9,6 +9,7 @@ import com.ifcolab.pet_sistema_backend.exception.UsuarioNaoEncontradoException;
 import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
 import com.ifcolab.pet_sistema_backend.model.usuario.TipoUsuario;
 import com.ifcolab.pet_sistema_backend.repository.UsuarioRepository;
+import com.ifcolab.pet_sistema_backend.repository.PetRepository;
 import com.ifcolab.pet_sistema_backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,12 +23,15 @@ import org.springframework.mail.javamail.JavaMailSender;
 import java.security.SecureRandom;
 
 import java.time.LocalDateTime;
+import com.ifcolab.pet_sistema_backend.model.pet.Pet;
+import com.ifcolab.pet_sistema_backend.exception.ResourceNotFoundException;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PetRepository petRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -56,10 +60,13 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public AuthenticationResponse registrarPetiano(RegisterRequest request) {
+    public AuthenticationResponse registrarPetiano(RegisterRequest request, Usuario tutorLogado) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
             throw new EmailJaCadastradoException(request.getEmail());
         }
+
+        Pet petDoTutor = petRepository.findByTutorId(tutorLogado.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tutor não possui um PET cadastrado"));
 
         String senhaGerada = gerarSenhaAleatoria();
         
@@ -73,6 +80,9 @@ public class AuthenticationService {
                 .build();
 
         var usuarioSalvo = usuarioRepository.save(usuario);
+        
+        petDoTutor.getMembros().add(usuarioSalvo);
+        petRepository.save(petDoTutor);
         
         enviarEmailComSenha(request.getEmail(), senhaGerada);
         

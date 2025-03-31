@@ -15,4 +15,6 @@ public class UsuarioResponse {
     private String nome;
     private String email;
     private TipoUsuario tipo;
+    private String imagemPerfil;
+    private String bio;
 } 

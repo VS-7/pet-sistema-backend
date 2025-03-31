@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.ifcolab.pet_sistema_backend.model.usuario.Usuario;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -36,8 +37,11 @@ public class AuthenticationController {
     @PostMapping("/registrar-petiano")
     @PreAuthorize("hasRole('TUTOR')")
     @Operation(summary = "Registrar petiano", description = "Registra um novo petiano no sistema (apenas tutores)")
-    public ResponseEntity<AuthenticationResponse> registrarPetiano(@RequestBody @Valid RegisterRequest request) {
-        return ResponseEntity.ok(authenticationService.registrarPetiano(request));
+    public ResponseEntity<AuthenticationResponse> registrarPetiano(
+            @RequestBody @Valid RegisterRequest request,
+            @AuthenticationPrincipal Usuario tutorLogado
+    ) {
+        return ResponseEntity.ok(authenticationService.registrarPetiano(request, tutorLogado));
     }
 /* 
     @PostMapping("/registrar")

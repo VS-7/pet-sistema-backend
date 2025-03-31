@@ -70,6 +70,10 @@ CREATE TABLE notificacoes (
     CONSTRAINT fk_notificacao_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
+
+
+
+
 CREATE INDEX idx_projetos_tutor ON projetos(tutor_id);
 CREATE INDEX idx_documentos_projeto ON documentos(projeto_id);
 CREATE INDEX idx_logs_usuario ON logs_atividades(usuario_id);
